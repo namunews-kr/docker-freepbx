@@ -102,6 +102,10 @@ RUN set -x && \
                     wget \
                     whois \
                     xmlstarlet \
+                    libopencore-amrnb-dev \
+                    libopencore-amrwb-dev \
+                    libvo-amrwbenc-dev \
+                    unzip \
                     && \
     \
 ### Install MariaDB ODBC Connector
@@ -122,10 +126,19 @@ RUN set -x && \
     make && \
     make install && \
     \
-### Build Asterisk
+### Get Asterisk Source Code
     cd /usr/src && \
     mkdir -p asterisk && \
     curl -sSL http://downloads.asterisk.org/pub/telephony/asterisk/releases/asterisk-${ASTERISK_VERSION}.tar.gz | tar xvfz - --strip 1 -C /usr/src/asterisk && \
+### Add AMR-* Codecs Patch
+    git clone https://github.com/traud/asterisk-amr /usr/src/asterisk-amr && \
+    cd /usr/src/asterisk-amr && \
+    git checkout 72fddba0ae9e799fa13232d99ea1524548e141d9 && \
+    cp --verbose --recursive ./* /usr/src/asterisk && \
+    cd /usr/src/asterisk && \
+    patch -p0 <./codec_amr.patch && \
+    patch -p0 <./build_tools.patch && \
+### Build Asterisk
     cd /usr/src/asterisk/ && \
     make distclean && \
     contrib/scripts/get_mp3_source.sh && \
